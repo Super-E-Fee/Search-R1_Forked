@@ -7,7 +7,7 @@
 **/*.tar.gz
 **/playground
 **/wandb
-
+*.gz
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]
@@ -120,3 +120,7 @@ tests/e2e/toy_examples/deepspeed/synchronous/output.txt
 log/
 
 **logs
+part_aa
+.gitignore
+.gitignore
+part_ab

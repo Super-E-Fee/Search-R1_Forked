@@ -104,7 +104,7 @@ Train a reasoning + search LLM on NQ dataset with e5 as the retriever and wikipe
 
 (1) Download the indexing and corpus.
 ```bash
-save_path=/the/path/to/save
+echo save_path=/home/Documents/Search-R1_Forked/data_save
 python scripts/download.py --save_path $save_path
 cat $save_path/part_* > $save_path/e5_Flat.index
 gzip -d $save_path/wiki-18.jsonl.gz
