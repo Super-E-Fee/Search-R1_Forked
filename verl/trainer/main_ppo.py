@@ -101,51 +101,51 @@ import ray
 import hydra
 
 
+# Hydra 框架的装饰器，用于管理应用程序的配置 
+# config_path='config' 指定配置文件所在的目录（通常是 config/ 文件夹）
+# config_name='ppo_trainer' 指定主配置文件的名称（即 config/ppo_trainer.yaml）
+# version_base=None 禁用 Hydra 的版本检查
+
+
 @hydra.main(config_path='config', config_name='ppo_trainer', version_base=None) 
-'''
-Hydra 框架的装饰器，用于管理应用程序的配置 
-config_path='config' 指定配置文件所在的目录（通常是 config/ 文件夹）
-config_name='ppo_trainer' 指定主配置文件的名称（即 config/ppo_trainer.yaml）
-version_base=None 禁用 Hydra 的版本检查
-'''
 def main(config):
-    '''
-    Hydra 装饰的主函数
-    config 参数会自动从指定的 YAML 配置文件加载
-    '''
+    # '''
+    # Hydra 装饰的主函数
+    # config 参数会自动从指定的 YAML 配置文件加载
+    # '''
     if not ray.is_initialized():
         # this is for local ray cluster
         ray.init(runtime_env={'env_vars': {'TOKENIZERS_PARALLELISM': 'true', 'NCCL_DEBUG': 'WARN'}})
-        '''
-        检查 Ray 是否已初始化，如果没有则初始化 ray.init() Ray 集群, 会检测所有 8 块 GPU，并初始化 Ray 运行
+        # '''
+        # 检查 Ray 是否已初始化，如果没有则初始化 ray.init() Ray 集群, 会检测所有 8 块 GPU，并初始化 Ray 运行
 
-        runtime_env 设置了环境变量：
+        # runtime_env 设置了环境变量：
 
-        TOKENIZERS_PARALLELISM='true'：允许 tokenizers 并行处理
+        # TOKENIZERS_PARALLELISM='true'：允许 tokenizers 并行处理
 
-        NCCL_DEBUG='WARN'：设置 NCCL (NVIDIA Collective Communications Library) 的调试级别为 WARN
+        # NCCL_DEBUG='WARN'：设置 NCCL (NVIDIA Collective Communications Library) 的调试级别为 WARN
 
-        '''
+        # '''
 
     ray.get(main_task.remote(config))
 
-    '''
-    main_task.remote(config) 将 main_task 函数作为远程任务提交到 Ray 集群
+    # '''
+    # main_task.remote(config) 将 main_task 函数作为远程任务提交到 Ray 集群
 
-    ray.get() 等待任务完成并获取结果
+    # ray.get() 等待任务完成并获取结果
 
-    .remote() 是 Ray 的语法，表示将函数调用分发到远程 worker 执行
-    '''
+    # .remote() 是 Ray 的语法，表示将函数调用分发到远程 worker 执行
+    # '''
 
 @ray.remote
 def main_task(config):
-    '''
-    @ray.remote 将这个函数标记为 分布式可执行任务。
-    当调用 main_task.remote(config) 时，Ray 不会立即执行它，而是：
-    将函数和参数序列化。
-    提交到 Ray 集群的任务队列中。
-    返回一个 ObjectRef（未来对象的引用）。
-    '''
+    # '''
+    # @ray.remote 将这个函数标记为 分布式可执行任务。
+    # 当调用 main_task.remote(config) 时，Ray 不会立即执行它，而是：
+    # 将函数和参数序列化。
+    # 提交到 Ray 集群的任务队列中。
+    # 返回一个 ObjectRef（未来对象的引用）。
+    # '''
     from verl.utils.fs import copy_local_path_from_hdfs
     from transformers import AutoTokenizer
 
@@ -153,12 +153,12 @@ def main_task(config):
     from pprint import pprint
     from omegaconf import OmegaConf
     pprint(OmegaConf.to_container(config, resolve=True))  # resolve=True will eval symbol values
-    '''
-    OmegaConf.to_container(config, resolve=True)：
-    将 Hydra/OmegaConf 的配置对象 config 转换为 Python 原生容器（如 dict）。
-    resolve=True 表示 解析所有变量插值（如 ${data.path} → 实际路径）。
-    此处的解析只是为了打印,下面才是真正使用的config解析.
-    '''
+    # '''
+    # OmegaConf.to_container(config, resolve=True)：
+    # 将 Hydra/OmegaConf 的配置对象 config 转换为 Python 原生容器（如 dict）。
+    # resolve=True 表示 解析所有变量插值（如 ${data.path} → 实际路径）。
+    # 此处的解析只是为了打印,下面才是真正使用的config解析.
+    # '''
     OmegaConf.resolve(config)
 
     # env_class = ENV_CLASS_MAPPING[config.env.name]
@@ -171,27 +171,27 @@ def main_task(config):
     # instantiate tokenizer
     from verl.utils import hf_tokenizer
     tokenizer = hf_tokenizer(local_path)
-    '''
-    不是所有模型都有官方的 hf_tokenizer，但绝大多数主流模型都有
-    '''
+    # '''
+    # 不是所有模型都有官方的 hf_tokenizer，但绝大多数主流模型都有
+    # '''
 
     # define worker classes
     if config.actor_rollout_ref.actor.strategy == 'fsdp': # FSDP 策略分支
-        '''
-            导入的类：
+        # '''
+        #     导入的类：
 
-            ActorRolloutRefWorker：负责生成 Actor 的轨迹（rollout）的 Worker。
+        #     ActorRolloutRefWorker：负责生成 Actor 的轨迹（rollout）的 Worker。
 
-            CriticWorker：负责计算价值函数的 Worker。
+        #     CriticWorker：负责计算价值函数的 Worker。
 
-            RayWorkerGroup：管理 Ray 分布式任务的控制器类。
+        #     RayWorkerGroup：管理 Ray 分布式任务的控制器类。
 
-            适用场景：
+        #     适用场景：
 
-            FSDP 是 PyTorch 的完全分片数据并行策略，适合 单机多卡或多机训练大模型。
+        #     FSDP 是 PyTorch 的完全分片数据并行策略，适合 单机多卡或多机训练大模型。
 
-            典型用例：训练参数量超过单卡显存容量的模型（如 7B+ LLM）。
-        '''
+        #     典型用例：训练参数量超过单卡显存容量的模型（如 7B+ LLM）。
+        # '''
 
         assert config.actor_rollout_ref.actor.strategy == config.critic.strategy
         from verl.workers.fsdp_workers import ActorRolloutRefWorker, CriticWorker
@@ -200,20 +200,20 @@ def main_task(config):
 
     elif config.actor_rollout_ref.actor.strategy == 'megatron': # Megatron 策略分支
 
-        '''
-            导入的类：
+        # '''
+        #     导入的类：
 
-            ActorRolloutRefWorker 和 CriticWorker：Megatron 定制实现的 Worker。
+        #     ActorRolloutRefWorker 和 CriticWorker：Megatron 定制实现的 Worker。
 
-            NVMegatronRayWorkerGroup：支持 Megatron 的 Ray 控制器（可能集成 NVIDIA 的优化）。
+        #     NVMegatronRayWorkerGroup：支持 Megatron 的 Ray 控制器（可能集成 NVIDIA 的优化）。
 
-            适用场景：
+        #     适用场景：
 
-            Megatron-LM 是 NVIDIA 的分布式训练框架，支持 张量并行、流水线并行。
+        #     Megatron-LM 是 NVIDIA 的分布式训练框架，支持 张量并行、流水线并行。
 
-            适合超大规模模型训练（如 100B+ 参数）。
+        #     适合超大规模模型训练（如 100B+ 参数）。
         
-        '''
+        # '''
         assert config.actor_rollout_ref.actor.strategy == config.critic.strategy
         from verl.workers.megatron_workers import ActorRolloutRefWorker, CriticWorker
         from verl.single_controller.ray.megatron import NVMegatronRayWorkerGroup
@@ -223,50 +223,50 @@ def main_task(config):
         raise NotImplementedError
 
     from verl.trainer.ppo.ray_trainer import ResourcePoolManager, Role
-    '''
-        ResourcePoolManager：
-        管理 Ray 集群的资源池（如 GPU 分组分配），确保不同角色的 Worker（Actor、Critic 等）按需获取资源。
+    # '''
+    #     ResourcePoolManager：
+    #     管理 Ray 集群的资源池（如 GPU 分组分配），确保不同角色的 Worker（Actor、Critic 等）按需获取资源。
 
-        Role：
-        枚举类，定义训练中的角色类型（如 ActorRollout 生成轨迹，Critic 计算价值函数）。
-    '''
+    #     Role：
+    #     枚举类，定义训练中的角色类型（如 ActorRollout 生成轨迹，Critic 计算价值函数）。
+    # '''
 
     role_worker_mapping = {
         Role.ActorRollout: ray.remote(ActorRolloutRefWorker),
         Role.Critic: ray.remote(CriticWorker),
         Role.RefPolicy: ray.remote(ActorRolloutRefWorker),
     }
-    '''
-        ray.remote(...) 将普通类转换为 分布式可调用的 Ray Actor。
+    # '''
+    #     ray.remote(...) 将普通类转换为 分布式可调用的 Ray Actor。
 
-        ActorRolloutRefWorker 被复用于 ActorRollout 和 RefPolicy 角色（可能共享相同实现但不同配置）。
-    '''
+    #     ActorRolloutRefWorker 被复用于 ActorRollout 和 RefPolicy 角色（可能共享相同实现但不同配置）。
+    # '''
 
     global_pool_id = 'global_pool'
     resource_pool_spec = {
         global_pool_id: [config.trainer.n_gpus_per_node] * config.trainer.nnodes,
     }
-    '''
-    资源池结构：
+    # '''
+    # 资源池结构：
 
-    global_pool_id：资源池名称（此处只有一个全局池）。
+    # global_pool_id：资源池名称（此处只有一个全局池）。
 
-    resource_pool_spec：定义资源池的实际资源，格式为 {pool_id: [gpu_per_node] * num_nodes}。
+    # resource_pool_spec：定义资源池的实际资源，格式为 {pool_id: [gpu_per_node] * num_nodes}。
 
-    例如，若 n_gpus_per_node=8 且 nnodes=2，则池子包含 [8, 8]，表示 2 个节点，每节点 8 GPU。
+    # 例如，若 n_gpus_per_node=8 且 nnodes=2，则池子包含 [8, 8]，表示 2 个节点，每节点 8 GPU。
 
 
-    '''
+    # '''
 
     mapping = {
         Role.ActorRollout: global_pool_id,
         Role.Critic: global_pool_id,
         Role.RefPolicy: global_pool_id,
     }
-    '''
-        指定每个角色从哪个资源池获取资源。
-        所有角色共享全局资源池（global_pool），由 Ray 动态调度。
-    '''
+    # '''
+    #     指定每个角色从哪个资源池获取资源。
+    #     所有角色共享全局资源池（global_pool），由 Ray 动态调度。
+    # '''
 
     # we should adopt a multi-source reward function here
     # - for rule-based rm, we directly call a reward score
@@ -290,11 +290,11 @@ def main_task(config):
     val_reward_fn = RewardManager(tokenizer=tokenizer, num_examine=1)
 
     resource_pool_manager = ResourcePoolManager(resource_pool_spec=resource_pool_spec, mapping=mapping)
-    '''
-        resource_pool_spec：定义全局资源池（如 {'global_pool': [8, 8]} 表示 2 节点 × 8 GPU）。
-        mapping：指定每个角色（Actor、Critic、RewardModel）使用的资源池。
+    # '''
+    #     resource_pool_spec：定义全局资源池（如 {'global_pool': [8, 8]} 表示 2 节点 × 8 GPU）。
+    #     mapping：指定每个角色（Actor、Critic、RewardModel）使用的资源池。
     
-    '''
+    # '''
     trainer = RayPPOTrainer(config=config,
                             tokenizer=tokenizer,
                             role_worker_mapping=role_worker_mapping,
