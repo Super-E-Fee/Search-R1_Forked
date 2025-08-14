@@ -8,6 +8,7 @@
 **/playground
 **/wandb
 *.gz
+*.xz
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]
@@ -124,3 +125,7 @@ part_aa
 .gitignore
 .gitignore
 part_ab
+
+*.index
+*.jsonl
+models/LLM-Research/Llama-3.2-3B-Instruct

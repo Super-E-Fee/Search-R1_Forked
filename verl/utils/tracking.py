@@ -42,7 +42,7 @@ class Tracking(object):
             WANDB_API_KEY = os.environ.get("WANDB_API_KEY", None)
             if WANDB_API_KEY:
                 wandb.login(key=WANDB_API_KEY)
-            wandb.init(project=project_name, name=experiment_name, config=config)
+            wandb.init(project=project_name, name=experiment_name, config=config, settings=wandb.Settings(init_timeout=200) )
             self.logger['wandb'] = wandb
 
         if 'mlflow' in default_backend:

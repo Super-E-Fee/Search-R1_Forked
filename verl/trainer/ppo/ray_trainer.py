@@ -367,7 +367,8 @@ class RayPPOTrainer(object):
         self.logger = Tracking(project_name=self.config.trainer.project_name,
                           experiment_name=self.config.trainer.experiment_name,
                           default_backend=self.config.trainer.logger,
-                          config=OmegaConf.to_container(self.config, resolve=True))
+                          config=OmegaConf.to_container(self.config, resolve=True),
+                          )
 
     def _create_dataloader(self):
         from torch.utils.data import DataLoader
@@ -624,14 +625,14 @@ class RayPPOTrainer(object):
         actor_local_path = os.path.join(self.config.trainer.default_local_dir, 'actor',
                                         f'global_step_{self.global_steps}')
         actor_remote_path = None if self.config.trainer.default_hdfs_dir is None else os.path.join(
-            self.config.trainer.default_hdfs_dir, 'actor')
+            self.config.trainer.default_hdfs_dir, 'actor', f'global_step_{self.global_steps}')
         self.actor_rollout_wg.save_checkpoint(actor_local_path, actor_remote_path)
 
         if self.use_critic:
             critic_local_path = os.path.join(self.config.trainer.default_local_dir, 'critic',
                                              f'global_step_{self.global_steps}')
             critic_remote_path = None if self.config.trainer.default_hdfs_dir is None else os.path.join(
-                self.config.trainer.default_hdfs_dir, 'critic')
+                self.config.trainer.default_hdfs_dir, 'critic', f'global_step_{self.global_steps}')
             self.critic_wg.save_checkpoint(critic_local_path, critic_remote_path)
 
     def _balance_batch(self, batch: DataProto, metrics, logging_prefix='global_seqlen'):
